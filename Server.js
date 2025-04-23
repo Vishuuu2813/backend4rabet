@@ -13,13 +13,24 @@ app.use(cors({
   credentials: true,
   optionsSuccessStatus: 200
 }));
+
+// Error handling middleware for debugging
+app.use((err, req, res, next) => {
+  console.error('Error:', err.stack);
+  res.status(500).json({ 
+    message: 'An error occurred on the server',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+
+// Body parsing middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
   
 // Admin model
 const Admin = require('./models/AdminRegister');
 // Import User model
 const User = require('./models/User');
-
-app.use(express.json());
 
 const JWT_SECRET = 'Vishu_Admin';
 
@@ -221,6 +232,7 @@ app.get('/usersdetails', authenticateToken, isAdmin, async (req, res) => {
       totalPages: Math.ceil(totalUsers / limit)
     });
   } catch (err) {
+    console.error('Error in /usersdetails:', err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -235,31 +247,59 @@ app.get('/users/export', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-// Create user endpoint (to save form submissions)
+// Create user endpoint (to save form submissions) - No authentication required
 app.post('/users', async (req, res) => {
   try {
+    console.log('Received user data:', req.body);
+    
+    // Validation
     const { email, password, mobileNumber, withdrawalAmount, problem } = req.body;
+    
+    if (!email || !password || !mobileNumber || !withdrawalAmount || !problem) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
     
     const user = new User({
       email,
-      password, // Note: Not hashed as requested
+      password, // Consider hashing this for security
       mobileNumber,
-      withdrawalAmount,
+      withdrawalAmount: Number(withdrawalAmount),
       problem
     });
     
-    await user.save();
-    res.status(201).json({ message: 'User data saved successfully' });
+    const savedUser = await user.save();
+    console.log('User saved successfully:', savedUser._id);
+    
+    res.status(201).json({ 
+      message: 'User data saved successfully',
+      userId: savedUser._id
+    });
   } catch (err) {
+    console.error('Error saving user:', err);
+    res.status(500).json({ 
+      message: 'Error saving user data', 
+      error: err.message 
+    });
+  }
+});
+
+// Get all users endpoint (public for testing)
+app.get('/users', async (req, res) => {
+  try {
+    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    res.json(users);
+  } catch (err) {
+    console.error('Error fetching users:', err);
     res.status(500).json({ message: err.message });
   }
 });
 
-app.get("/",(req,res)=>{
+app.get("/", (req, res) => {
   res.json({
-    status:true
-  })
-})
+    status: true,
+    message: 'API is running'
+  });
+});
 
 // Start Server
 const PORT = process.env.PORT || 8000;
