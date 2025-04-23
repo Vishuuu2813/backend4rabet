@@ -3,18 +3,22 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const app = express();
 
+var corsOptions = {
+    origin: '*',
+    optionsSuccessStatus: 200
+  }
+  app.use(cors(corsOptions));
+  
 // ✅ Admin model
 const Admin = require('./models/AdminRegister');
 // Import User model
 const User = require('./models/User');
 
-const app = express();
-var corsOptions = {
-  origin: '*',
-  optionsSuccessStatus: 200
-}
-app.use(cors(corsOptions));
+
+
+
 app.use(express.json());
 
 const JWT_SECRET = 'Vishu_Admin';
