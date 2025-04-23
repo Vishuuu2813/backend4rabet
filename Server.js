@@ -5,25 +5,25 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const app = express();
 
-var corsOptions = {
-    origin: '*',
-    optionsSuccessStatus: 200
-  }
-  app.use(cors(corsOptions));
+// Improved CORS configuration
+app.use(cors({
+  origin: ['https://frontend4rabet.vercel.app', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
   
-// ✅ Admin model
+// Admin model
 const Admin = require('./models/AdminRegister');
 // Import User model
 const User = require('./models/User');
-
-
-
 
 app.use(express.json());
 
 const JWT_SECRET = 'Vishu_Admin';
 
-// ✅ Connect to MongoDB
+// Connect to MongoDB
 const connectDB = async () => {
   try {
     await mongoose.connect('mongodb+srv://4RaBetOfficalAccount:NSL5DgJbJovGbXrT@cluster0.4iukcq5.mongodb.net/4RaBet', {
@@ -39,7 +39,7 @@ const connectDB = async () => {
 
 connectDB();
 
-// ✅ Register Admin
+// Register Admin
 app.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -63,7 +63,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// ✅ Regular Login (keep this for non-admin users if needed)
+// Regular Login (keep this for non-admin users if needed)
 app.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -91,7 +91,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// ✅ Admin Login - Separate endpoint with role verification
+// Admin Login - Separate endpoint with role verification
 app.post('/admin/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -124,7 +124,7 @@ app.post('/admin/login', async (req, res) => {
   }
 });
 
-// ✅ JWT Authentication Middleware
+// JWT Authentication Middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -140,7 +140,7 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
-// ✅ Admin Authorization Middleware
+// Admin Authorization Middleware
 const isAdmin = (req, res, next) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Access denied: Admin privileges required' });
@@ -148,7 +148,7 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
-// ✅ Verify Auth Endpoint - Critical for protected routes
+// Verify Auth Endpoint - Critical for protected routes
 app.get('/verify-auth', authenticateToken, async (req, res) => {
   try {
     const admin = await Admin.findById(req.user._id).select('-password');
@@ -170,7 +170,7 @@ app.get('/verify-auth', authenticateToken, async (req, res) => {
   }
 });
 
-// ✅ Protected Admin Route Example
+// Protected Admin Route Example
 app.get('/admin-data', authenticateToken, isAdmin, async (req, res) => {
   try {
     const admin = await Admin.findById(req.user._id).select('-password');
@@ -179,8 +179,6 @@ app.get('/admin-data', authenticateToken, isAdmin, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
-
 
 // Get users with pagination, sorting and search
 app.get('/usersdetails', authenticateToken, isAdmin, async (req, res) => {
@@ -262,7 +260,8 @@ app.get("/",(req,res)=>{
     status:true
   })
 })
-// ✅ Start Server
-const PORT = 8000;
 
-app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
+// Start Server
+const PORT = process.env.PORT || 8000;
+
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
