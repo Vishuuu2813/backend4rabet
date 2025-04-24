@@ -5,32 +5,20 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const app = express();
 
-// Improved CORS configuration
-app.use(cors({
-  origin: ['https://frontend4rabet.vercel.app', 'http://localhost:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
+
+var corsOptions = {
+  origin: '*',
   optionsSuccessStatus: 200
-}));
+}
+app.use(cors(corsOptions));
 
-// Error handling middleware for debugging
-app.use((err, req, res, next) => {
-  console.error('Error:', err.stack);
-  res.status(500).json({ 
-    message: 'An error occurred on the server',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
-});
 
-// Body parsing middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-  
-// Admin model
+// ✅ Admin model
 const Admin = require('./models/AdminRegister');
 // Import User model
 const User = require('./models/User');
+
+app.use(express.json());
 
 const JWT_SECRET = 'Vishu_Admin';
 
